@@ -1,21 +1,27 @@
+import pprint
+
 from pandas import DataFrame
 
 from chollometro.drivers.ChromeDriver import *
 from chollometro.model.Product import Product
+import json
 import pandas as pd
 
 driver().get("https://www.chollometro.com/nuevos")
 
-COLUMNS = ["CATEGORY", "IMAGE", "NAME", "PRICE", "OLD_PRICE", "RATE", "DELIVERY", "MSG", "USER", "LINK"]
+# COLUMNS = ["CATEGORY", "IMAGE", "NAME", "PRICE", "OLD_PRICE", "RATE", "DELIVERY", "MSG", "USER", "LINK"]
 
+# Selector del catalogo en bruto
 CATALOG = driver().find_elements_by_css_selector("section.gridLayout > div.gridLayout-item > article")
 
+# Lista con los webelements del catalogo
 catalog = [item for item in CATALOG]
 
-products_catalog = []
+products_catalog_json = []
 
 for item in catalog:
 
+#Selectores de los atributos aplicados a cada item
     try:
         category = item.find_element_by_css_selector(
             "section.gridLayout > div.gridLayout-item > article > div > div > span").text
@@ -64,23 +70,28 @@ for item in catalog:
     except:
         link = "..."
 
-    products_catalog.append(Product(category,
-                                    image,
-                                    name,
-                                    price,
-                                    old_price,
-                                    rate,
-                                    delivery,
-                                    msg,
-                                    user,
-                                    link
-                                    ))
-df: DataFrame = DataFrame()
+# Se añade un diccionario con los atributos de cada item a la lista_json
+    products_catalog_json.append(
+        {
+        'category': category,
+        'image': image,
+        'name': name,
+        'price': price,
+        'old_price': old_price,
+        'rate': rate,
+        'delivery': delivery,
+        'msg': msg,
+        'user': user,
+        'link': link
+        }
+    )
 
 
-for x in products_catalog:
-    # print(x.get_name() + " -> " + x.get_price() + " -> " + x.get_rate())
+for x in products_catalog_json:
 
-    df.append(pd.DataFrame(products_catalog,COLUMNS))
-print(df)
+    if x['rate'][2:-2].isnumeric() and int(x['rate'][2:-2]) > 35:
+        print(x['rate'])
+        print(x['link'])
+
+
 driver().close()
